@@ -102,7 +102,53 @@ void rbdraw(const RigidBody *rb)
 
 Shape AsShape(const WingMesh &m) { return Shape(m.verts, m.GenerateTris()); }
 
-
+namespace detail {
+	struct VoxelCandidate {
+		uint3 pos = { 0, 0, 0 };
+		float3 sum = { 0, 0, 0 };
+		int cnt = 0;
+	};
+}
+//must be a power of two
+template <int numVoxels>
+void voxelSubsample(const std::vector<float3> & input, std::vector<float3> &output, float voxelSize, int minVoxelNum)
+{
+	using detail::VoxelCandidate;
+	typedef unsigned int uint;
+	VoxelCandidate cand[numVoxels];
+	auto voxelMask = numVoxels - 1;
+	auto iVS = 1.0f / voxelSize; //inverse voxel size
+	//auto hashCoeff = uint3(3863,2029,49139); //good for mm
+	auto hashCoeff = uint3(54851, 11909, 24781); //good for m
+	for (const auto & pt : input) {
+		uint3 intPos(static_cast<uint>(std::floor(pt.x*iVS)), static_cast<uint>(std::floor(pt.y*iVS)), static_cast<uint>(std::floor(pt.z*iVS)));
+		unsigned int hash = dot(hashCoeff, intPos);
+		hash &= voxelMask;
+		auto & bucket = cand[hash];
+		if (bucket.cnt && bucket.pos != intPos) { //flush on collision
+			bucket.cnt = 0;
+			bucket.sum = { 0, 0, 0 };
+		}
+		if (!bucket.cnt) {
+			bucket.pos = intPos;
+		}
+		bucket.sum += pt;
+		bucket.cnt++;
+	}
+	for (const auto &pt : cand)
+	{
+		if (pt.cnt >= minVoxelNum)
+			output.emplace_back(pt.sum / static_cast<float>(pt.cnt));
+	}
+}
+//must be a power of two
+template <int numVoxels>
+std::vector<float3> voxelSubsample(const std::vector<float3> & input, float voxelSize, int minVoxelNum)
+{
+	std::vector<float3> output;
+	voxelSubsample<numVoxels>(input, output, voxelSize, minVoxelNum);
+	return output;
+}
 int APIENTRY WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst,LPSTR lpszCmdLine, int nCmdShow) // int main(int argc, char *argv[])
 {
 	std::cout << "Test tracking\n";
@@ -114,7 +160,6 @@ int APIENTRY WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst,LPSTR lpszC
 	std::vector<RigidBody*> rigidbodies = { &trackmodel };
 
 	WingMesh world_slab = WingMeshBox({ -2, -2, -0.75f }, { 2, 2, -0.5f }); // just some ground plane world_geometry
-
 
 
 	GLWin glwin("Tracking single object from depth samples.");
@@ -152,7 +197,6 @@ int APIENTRY WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst,LPSTR lpszC
 				break;
 			}
 	};
-
 	while (glwin.WindowUp())
 	{
 		frame+=animating;
@@ -167,13 +211,14 @@ int APIENTRY WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst,LPSTR lpszC
 		boxpose.orientation = normalize(float4(sinf(frame*0.01f),sin(frame*0.035f),sin(frame*0.045f),1.0f));  // animate the source object
 		boxpose.position = float3(sinf(frame*0.01f)*0.75f, cosf(frame*0.01f)*0.75f, boxpose.position.z);
 	
-		std::vector<float3> depthdata; // generated pointcloud 
+		std::vector<float3> originalData; // generated pointcloud 
 		for (float y = -1.0f; y <= 1.0f; y += 2.0f/sample_resolution) for (float x = -1.0f; x <= 1.0f; x += 2.0f/sample_resolution)
 		{
 			if (auto hit = ConvexHitCheck(box.faces, boxpose, { 0, 0, 0 }, float3(x, y, 1.0f)*5.0f))
-				depthdata.push_back(hit.impact);
+				originalData.push_back(hit.impact);
 		}
-		std::vector<std::pair<float3,float3>> match;
+		auto depthdata = voxelSubsample<1024>(originalData, 0.05f, 1);
+		std::vector<std::pair<float3, float3>> match;
 		if (enable_tracking)
 		{
 			trackmodel.gravscale = 0;
@@ -186,7 +231,7 @@ int APIENTRY WinMain(HINSTANCE hCurrentInst, HINSTANCE hPreviousInst,LPSTR lpszC
 			for (auto p0 : depthdata)
 			{
 				auto plane = closestplane(planesw, p0, { 0, 0, 0 });  // could pass normal direction of -p0 to avoid backside planes
-				if (plane.w < 0) plane.w = std::min(0.0f, plane.w + dot(plane.xyz(), normalize(p0))*0.2f);  // small hack here (may add jitter)!! add thickness if we are using a backside plane
+				//if (plane.w < 0) plane.w = std::min(0.0f, plane.w + dot(plane.xyz(), normalize(p0))*0.2f);  // small hack here (may add jitter)!! add thickness if we are using a backside plane
 
 				auto p1w = p0 - plane.xyz()*dot(plane, float4(p0, 1));               // p1 is on the plane
 				match.push_back(std::pair<float3, float3>(p0, p1w));

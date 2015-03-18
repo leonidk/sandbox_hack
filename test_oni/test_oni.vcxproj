@@ -19,9 +19,9 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{A15B7BD9-DC89-4553-80E6-5140731C804C}</ProjectGuid>
+    <ProjectGuid>{DD793A9B-4589-4CC0-94B2-7A07FE9E06DA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>testgjk</RootNamespace>
+    <RootNamespace>testrig</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -48,22 +48,38 @@
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="OpenNI2.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="OpenNI2.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="OpenNI2.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="OpenNI2.props" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <OutDir>$(ProjectDir)\</OutDir>
+    <IntDir>$(SolutionDir)\obj\$(ProjectName)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)</OutDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
+    <IncludePath>..\include;../LibOVR/Include;../LibOVR/Src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <OutDir>$(ProjectDir)\</OutDir>
+    <IntDir>$(SolutionDir)\obj\$(ProjectName)\$(Configuration)\</IntDir>
+    <OutDir>$(ProjectDir)</OutDir>
     <TargetName>$(ProjectName)_$(Configuration)</TargetName>
+    <IncludePath>..\include;../LibOVR/Include;../LibOVR/Src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>..\include;../LibOVR/Include;../LibOVR/Src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>..\include;../LibOVR/Include;../LibOVR/Src;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -71,10 +87,10 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
@@ -86,23 +102,28 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <FloatingPointModel>Fast</FloatingPointModel>
     </ClCompile>
     <Link>
-      <SubSystem>Windows</SubSystem>
+      <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="testgjk.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\include\geometric.h" />
     <ClInclude Include="..\include\gjk.h" />
-    <ClInclude Include="..\include\glwin.h" />
-    <ClInclude Include="..\include\hull.h" />
+    <ClInclude Include="..\include\mesh.h" />
+    <ClInclude Include="..\include\minixml.h" />
+    <ClInclude Include="..\include\vecmatquat.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="nanoflann.hpp" />
+    <ClInclude Include="ONICamera.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="test_oni.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
